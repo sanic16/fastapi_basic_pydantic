@@ -39,7 +39,7 @@ async def read_book(book_id: int = Path(gt=0, description="The ID of the book yo
     for book in BOOKS:
         if book.id == book_id:
             return book
-    return {'message': 'Book not found'}
+    raise HTTPException(status_code=404, detail="Book not found")
 
 @app.get('/books/')
 async def read_book_by_rating(book_rating: int = Query(gt=0, lt=6)):
@@ -67,17 +67,24 @@ async def create_book(book_request: BookRequest):
 
 @app.put('/books/update_book')
 async def update_book(book: BookRequest):
-    
+    book_changed = False
     for i in range(len(BOOKS)):
         if BOOKS[i].id == book.id:
             BOOKS[i] = book
-            return book
-    return {'message': 'Book not found'}
+            book_changed = True
+            break
+    if not book_changed:
+        raise HTTPException(status_code=404, detail="Book not found")
+    return book
 
 @app.delete('/books/{book_id}')
 async def delete_book(book_id: int = Path(gt=0, description="The ID of the book you want to delete")):
+    book_changed = False
     for i in range(len(BOOKS)):
         if BOOKS[i].id == book_id:
             BOOKS.pop(i)
-            return {'message': 'Book deleted'}
-    return {'message': 'Book not found'}
+            book_changed = True
+            break
+
+    if not book_changed:
+        raise HTTPException(status_code=404, detail="Book not found")
